@@ -31,6 +31,7 @@ if (!function_exists('get_field')) {
 
 // load needed files
 require_once plugin_dir_path(__FILE__) . 'includes/woo-orders.php';
+require_once    plugin_dir_path(__FILE__) . 'includes/import-tools.php';
 
 
 

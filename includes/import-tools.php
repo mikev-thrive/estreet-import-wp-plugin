@@ -60,7 +60,9 @@ add_filter( 'woocommerce_can_reduce_order_stock', '__return_false' );
 //
 //Custom Rest endpoint
 add_action('rest_api_init', function () {
-    register_rest_route('custom/v1', '/set-order-date', [
+    error_log('Registering custom REST endpoint /wp-json/custom/v1/set-order-date');
+    
+    $result = register_rest_route('custom/v1', '/set-order-date', [
         'methods'             => 'POST',
         'callback'            => 'custom_set_order_post_date',
         'permission_callback' => function ($request) {
@@ -124,7 +126,23 @@ add_action('rest_api_init', function () {
             ],
         ],
     ]);
-});
+    
+    if ($result) {
+        error_log('Successfully registered custom REST endpoint');
+    } else {
+        error_log('Failed to register custom REST endpoint');
+    }
+    
+    // Also register a test endpoint to verify registration is working
+    register_rest_route('custom/v1', '/test', [
+        'methods'             => 'GET',
+        'callback'            => function() {
+            return new WP_REST_Response(['message' => 'Custom endpoint is working'], 200);
+        },
+        'permission_callback' => '__return_true',
+    ]);
+    
+}, 10); // Lower priority to ensure it runs after WooCommerce is loaded
 
 function custom_set_order_post_date($request) {
     $order_id = $request['order_id'];
