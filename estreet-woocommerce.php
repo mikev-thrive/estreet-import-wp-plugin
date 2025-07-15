@@ -28,12 +28,12 @@ if (!function_exists('get_field')) {
     });
     return;
 }   
-
 // load needed files
 require_once plugin_dir_path(__FILE__) . 'includes/woo-orders.php';
-require_once    plugin_dir_path(__FILE__) . 'includes/import-tools.php';
+require_once plugin_dir_path(__FILE__) . 'includes/import-tools.php';
 
-
+//load the API files
+require_once plugin_dir_path(__FILE__) . 'includes/api/orderupdate.php';
 
 
 
