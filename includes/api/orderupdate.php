@@ -109,18 +109,29 @@ function set_order_date($request) {
 
   error_log('Order found: ' . $order->get_id());
 
-  // Convert date to GMT
-  $gmt = get_gmt_from_date($date);
-  error_log('GMT: ' . $gmt);
-  if (!$gmt) {
+  // Parse and normalize the date format
+  $timestamp = strtotime($date);
+  if ($timestamp === false) {
     error_log('ERROR: Invalid date format: ' . $date);
     return new WP_Error('invalid_date', 'Invalid date format', ['status' => 400]);
+  }
+  
+  // Convert to MySQL datetime format
+  $normalized_date = date('Y-m-d H:i:s', $timestamp);
+  error_log('Normalized date: ' . $normalized_date);
+
+  // Convert date to GMT
+  $gmt = get_gmt_from_date($normalized_date);
+  error_log('GMT: ' . $gmt);
+  if (!$gmt) {
+    error_log('ERROR: Failed to convert to GMT: ' . $normalized_date);
+    return new WP_Error('invalid_date', 'Failed to convert date to GMT', ['status' => 400]);
   }
 
   // Prepare post data for update
   $post_data = [
     'ID' => $order_id,
-    'post_date' => $date,
+    'post_date' => $normalized_date,
     'post_date_gmt' => $gmt,
   ];
   error_log('Post data: ' . print_r($post_data, true));
@@ -137,7 +148,7 @@ function set_order_date($request) {
   }
 
   // Get an instance of the WC_DateTime object
-  $date_time = new WC_DateTime($date);
+  $date_time = new WC_DateTime($normalized_date);
 
   // Set it in the order
   $order->set_date_created($date_time);
@@ -145,9 +156,9 @@ function set_order_date($request) {
   error_log('Order date updated using WC_DateTime to: ' . $date_time->date('Y-m-d H:i:s'));
 
   // Update WooCommerce paid date using update_meta_data
-  $order->update_meta_data('_paid_date', $date);
+  $order->update_meta_data('_paid_date', $normalized_date);
   $order->save();
-  error_log('WooCommerce paid date explicitly set to: ' . $date);
+  error_log('WooCommerce paid date explicitly set to: ' . $normalized_date);
 
   // Set the payment complete date using WooCommerce's method
   $order->set_date_paid($date_time);
@@ -167,7 +178,7 @@ function set_order_date($request) {
     'success' => true,
     'message' => 'Order date and paid date updated successfully.',
     'order_id' => $order_id,
-    'date' => $date,
+    'date' => $normalized_date,
     'verified_post_date' => $updated_post_date,
     'verified_paid_date' => $updated_date_paid,
   ]);
